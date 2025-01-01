@@ -1,9 +1,48 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import FormField from "../components/Formfield";
 import { UserPlus } from "lucide-react";
+import AuthService from "../services/auth/auth.service";
 
 export default function Signup() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    phone: "",
+    role: "student",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await AuthService.signup(formData);
+      if (response.token) {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-6">
@@ -17,48 +56,63 @@ export default function Signup() {
           <p className="text-gray-600">Join our community today</p>
         </div>
 
-        <form className="space-y-4">
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <FormField
             label="Username"
             type="text"
             name="username"
+            value={formData.username}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
           <FormField
             label="Email"
             type="email"
             name="email"
+            value={formData.email}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
           <FormField
             label="Password"
             type="password"
             name="password"
+            value={formData.password}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
           <FormField
             label="Phone"
             type="tel"
             name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
 
           <button
             type="submit"
-            className="w-full px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+            disabled={loading}
+            className="w-full px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <div className="text-center text-sm text-gray-500">
           Already have an account?{" "}
-          <a
+          <Link
             href="/login"
             className="text-blue-500 hover:text-blue-600 font-medium"
           >
             Sign in
-          </a>
+          </Link>
         </div>
       </div>
     </div>
